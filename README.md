@@ -26,6 +26,35 @@ Entre as fases, o jogador pode acessar o **Hangar de Upgrades** para aprimorar b
 
 ---
 
+## Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%">
+        <h3 align="center">Batalha Final — Dreadnought Boss</h3>
+        <img src="docs/screenshots/boss_fight.png" alt="Boss Fight Setor 10" width="100%" />
+      </td>
+      <td width="50%">
+        <h3 align="center">Combate Espacial — Setor 4</h3>
+        <img src="docs/screenshots/gameplay.png" alt="Gameplay Setor 4" width="100%" />
+      </td>
+    </tr>
+    <tr>
+      <td width="50%">
+        <h3 align="center">Menu Principal</h3>
+        <img src="docs/screenshots/menu.png" alt="Menu Principal" width="100%" />
+      </td>
+      <td width="50%">
+        <h3 align="center">Hangar de Upgrades</h3>
+        <img src="docs/screenshots/shop.png" alt="Hangar de Upgrades" width="100%" />
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
 ## Funcionalidades
 
 | Recurso | Nível | Descrição |
@@ -89,6 +118,8 @@ GalaxyDefender/
 ├── asset/              ← Sprites, texturas, trilhas sonoras e efeitos de áudio
 ├── bin/                ← Executável final compilado para Windows (main.exe)
 ├── data/               ← Banco de dados local SQLite (savegame.db)
+├── docs/
+│   └── screenshots/    ← Capturas de tela e ilustrações do jogo
 ├── scripts/            ← Utilitários de geração procedural de sprites (build_sprites.py)
 ├── src/                ← Código-fonte modular da aplicação (Clean Architecture)
 │   ├── application/    ← Orquestração do loop do jogo e lógica do hangar

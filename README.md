@@ -120,7 +120,6 @@ GalaxyDefender/
 ├── data/               ← Banco de dados local SQLite (savegame.db)
 ├── docs/
 │   └── screenshots/    ← Capturas de tela e ilustrações do jogo
-├── scripts/            ← Utilitários de geração procedural de sprites (build_sprites.py)
 ├── src/                ← Código-fonte modular da aplicação (Clean Architecture)
 │   ├── application/    ← Orquestração do loop do jogo e lógica do hangar
 │   ├── domain/         ← Entidades (jogador, inimigos, boss, lasers, fases)

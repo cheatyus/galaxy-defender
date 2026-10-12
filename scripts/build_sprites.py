@@ -1,5 +1,6 @@
 import os
 import math
+from collections import deque
 from PIL import Image, ImageDraw
 
 
@@ -184,54 +185,86 @@ def create_explosion_spritesheet():
 
 
 def create_boss_spritesheet():
-    seed = Image.open(get_asset_path("asset/Enemy2.png")).convert("RGBA")
-    boss_hull = seed.resize((140, 70), Image.Resampling.NEAREST)
-    bw, bh = boss_hull.size
+    raw_path = get_asset_path("asset/boss_raw.jpg")
+    if not os.path.exists(raw_path):
+        raw_path = r"C:\Users\dev\.gemini\antigravity\brain\ed0b5764-64ee-41f2-9bae-495ec637bbe1\boss_sprite_sheet_1791819113294.jpg"
 
-    fw, fh = 160, 90
-    num_frames = 4
-    sheet = Image.new("RGBA", (fw * num_frames, fh), (0, 0, 0, 0))
+    if os.path.exists(raw_path):
+        raw = Image.open(raw_path).convert("RGB")
+        w_total, h_total = raw.size
+        half_w, half_h = w_total // 2, h_total // 2
 
-    ship_x = 8
-    ship_y = (fh - bh) // 2
+        quadrants = [
+            raw.crop((0, 0, half_w, half_h)),
+            raw.crop((half_w, 0, w_total, half_h)),
+            raw.crop((0, half_h, half_w, h_total)),
+            raw.crop((half_w, half_h, w_total, h_total)),
+        ]
 
-    engine_y_positions = [ship_y + 12, ship_y + bh // 2, ship_y + bh - 12]
-    exhaust_x = ship_x + bw - 4
+        def remove_checkerboard(img):
+            rgba = img.convert("RGBA")
+            w, h = rgba.size
+            pix = rgba.load()
+            visited = set()
+            queue = deque()
 
-    flame_lengths = [10, 18, 25, 15]
+            for x in range(w):
+                queue.append((x, 0))
+                queue.append((x, h - 1))
+            for y in range(h):
+                queue.append((0, y))
+                queue.append((w - 1, y))
 
-    for i in range(num_frames):
-        frame = Image.new("RGBA", (fw, fh), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(frame)
+            def is_checkerboard(r, g, b):
+                return abs(r - g) <= 10 and abs(g - b) <= 10 and abs(r - b) <= 10 and r >= 140
 
-        flen = flame_lengths[i]
-        for ey in engine_y_positions:
-            draw.polygon(
-                [(exhaust_x, ey - 5), (exhaust_x + flen, ey), (exhaust_x, ey + 5)],
-                fill=(155, 89, 182, 240),
-            )
-            draw.polygon(
-                [(exhaust_x, ey - 2), (exhaust_x + int(flen * 0.6), ey), (exhaust_x, ey + 2)],
-                fill=(241, 196, 15, 255),
-            )
+            while queue:
+                cx, cy = queue.popleft()
+                if (cx, cy) in visited:
+                    continue
+                visited.add((cx, cy))
 
-        frame.paste(boss_hull, (ship_x, ship_y), boss_hull)
+                r, g, b, a = pix[cx, cy]
+                if is_checkerboard(r, g, b):
+                    pix[cx, cy] = (0, 0, 0, 0)
+                    for nx, ny in [(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)]:
+                        if 0 <= nx < w and 0 <= ny < h and (nx, ny) not in visited:
+                            queue.append((nx, ny))
 
-        shield_alpha = int(90 + 60 * math.sin(i * math.pi / 2))
-        draw.ellipse([ship_x - 6, ship_y - 6, ship_x + bw + 6, ship_y + bh + 6], outline=(142, 68, 173, shield_alpha), width=2)
+            return rgba
 
-        core_x = ship_x + bw // 2
-        core_y = ship_y + bh // 2
-        core_radius = 5 + int(2 * math.sin(i * math.pi / 2))
-        draw.ellipse(
-            [core_x - core_radius, core_y - core_radius, core_x + core_radius, core_y + core_radius],
-            fill=(231, 76, 60, 255),
-        )
+        cleaned_frames = [remove_checkerboard(q) for q in quadrants]
 
-        sheet.paste(frame, (i * fw, 0))
+        frame_w = 170
+        frame_h = 92
+        num_frames = 4
 
-    sheet.save(get_asset_path("asset/boss_sheet.png"))
-    print("Salvo: asset/boss_sheet.png")
+        anchor_bbox = cleaned_frames[0].getbbox()
+        anchor_w = anchor_bbox[2] - anchor_bbox[0] if anchor_bbox else 500
+        global_scale = 135.0 / float(anchor_w)
+
+        sheet = Image.new("RGBA", (frame_w * num_frames, frame_h), (0, 0, 0, 0))
+
+        for i, frame in enumerate(cleaned_frames):
+            new_w = int(frame.width * global_scale)
+            new_h = int(frame.height * global_scale)
+            scaled_frame = frame.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            scaled_frame = scaled_frame.transpose(Image.FLIP_LEFT_RIGHT)
+
+            out_frame = Image.new("RGBA", (frame_w, frame_h), (0, 0, 0, 0))
+            crop_box = scaled_frame.getbbox()
+            if crop_box:
+                cropped = scaled_frame.crop(crop_box)
+                paste_x = (frame_w - cropped.width) // 2
+                paste_y = (frame_h - cropped.height) // 2
+                out_frame.paste(cropped, (paste_x, paste_y), cropped)
+            else:
+                out_frame.paste(scaled_frame, (0, 0), scaled_frame)
+
+            sheet.paste(out_frame, (i * frame_w, 0), out_frame)
+
+        sheet.save(get_asset_path("asset/boss_sheet.png"))
+        print("Salvo: asset/boss_sheet.png")
 
 
 if __name__ == "__main__":
